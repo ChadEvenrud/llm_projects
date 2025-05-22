@@ -1,10 +1,10 @@
 import os
 import requests
-#import Markdown, display
 from openai import OpenAI
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from IPython.display import Markdown, display, update_display
+from IPython import display 
+import markdown
 from typing import List
 
 #load environment variables 
