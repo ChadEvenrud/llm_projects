@@ -1,10 +1,12 @@
 import os
 import requests
 from openai import OpenAI
+import anthropic
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from IPython import display 
 import markdown
+import google.generativeai
 from typing import List
 
 #load environment variables 
@@ -41,16 +43,17 @@ class Website:
             irrelevant.decompose()
         self.text = soup.body.get_text(separator="\n", strip=True)
         
-class LLM_Clients:
+class LLM_Clients_OpenAI:
     """
     Creates LLM System Prompts for a LLM use cases    
     """
     
-    def __init__(self, model="gpt-4o-mini"):
-            
+    def __init__(self, model="gpt-4o-mini"):        
+                    
         self.system_prompt = ""                
         self.user_prompt = ""
-    
+        
+            
         self.api_key = os.getenv('OPENAI_API_KEY')
         self.openai = OpenAI()    
         self.MODEL =  model  
@@ -96,7 +99,15 @@ class LLM_Clients:
         
         return (self.summarize(messages_for(self.system_prompt, self.user_prompt)))
     
+class LLM_Clients_Claude:
+    def __init__(self, model='claude-3-7-sonnet-latest'):
+        self.system_prompt = ''
+        self.user_prompt = ''
         
+        self.api_key = os.getenv('ANTHROPIC_API_KEY')
+        self.claude = anthropic.Anthropic()
+        self.MODEL = model
+            
             
        
             
