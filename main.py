@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from IPython import display 
 import markdown
-import google.generativeai
+# import google.generativeai
 from typing import List
 
 #load environment variables 
@@ -100,15 +100,42 @@ class LLM_Clients_OpenAI:
         return (self.summarize(messages_for(self.system_prompt, self.user_prompt)))
     
 class LLM_Clients_Claude:
-    def __init__(self, model='claude-3-7-sonnet-latest'):
+    def __init__(self, model='claude-3-7-sonnet-latest', temperature=1, tokens=200):
         self.system_prompt = ''
         self.user_prompt = ''
         
         self.api_key = os.getenv('ANTHROPIC_API_KEY')
         self.claude = anthropic.Anthropic()
         self.MODEL = model
-            
-            
+        self.TEMPERATURE = temperature
+        self.TOKENS = tokens
+        self.conversation_history = []
+    
+    # def create_prompt(self, system_prompt, user_prompt):
+    #     self.system_prompt = system_prompt
+    #     self.user_prompt = user_prompt        
+    #     return  {"role": "user", "content": user_prompt}
+                
+    def chat(self, user_input):
+        
+        self.conversation_history.append({'role':'user','content':user_input})
+        response = self.claude.messages.stream(
+            model =self.MODEL,
+            max_tokens = self.TOKENS,
+            system = self.system_prompt,
+            messages = self.conversation_history
+            )
+        claude_response = ''
+        with response as stream:
+            for text in stream.text_stream:
+                claude_response += claude_response + ' ' + text
+                print(text, end="", flush=True)
+        self.conversation_history.append({"role": "assistant", "content": claude_response})
+        return claude_response
+        
+        
+        
+                
        
             
 
@@ -116,12 +143,10 @@ class LLM_Clients_Claude:
         
 
 if __name__ == "__main__":
-    
-    llm_prompts = LLM_Clients()
-    #website_model = llm_prompts.website("https://cnn.com")
-    #print(display(website_model))
-    
-    tech_question = input("What can I help you with?")
-    
-    tech_support = llm_prompts.tech_assistant(tech_question)
-    print(tech_support)
+    ai = LLM_Clients_Claude() 
+    while True:
+        user_input = input("Question: ")               
+        if user_input.lower() == "exit":
+            break
+        else:
+            ai.chat(user_input)
