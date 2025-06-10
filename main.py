@@ -8,6 +8,7 @@ from IPython import display
 import markdown
 # import google.generativeai
 from typing import List
+import gradio as gr 
 
 #load environment variables 
 load_dotenv()
@@ -116,22 +117,31 @@ class LLM_Clients_Claude:
     #     self.user_prompt = user_prompt        
     #     return  {"role": "user", "content": user_prompt}
                 
-    def chat(self, user_input):
+    def chat(self, message, history):
         
-        self.conversation_history.append({'role':'user','content':user_input})
-        response = self.claude.messages.stream(
-            model =self.MODEL,
-            max_tokens = self.TOKENS,
-            system = self.system_prompt,
-            messages = self.conversation_history
-            )
-        claude_response = ''
-        with response as stream:
-            for text in stream.text_stream:
-                claude_response += claude_response + ' ' + text
-                print(text, end="", flush=True)
-        self.conversation_history.append({"role": "assistant", "content": claude_response})
-        return claude_response
+        # Convert chat history to Claude-style messages
+        print(history)
+        messages = []
+        for turn in history:
+            messages.append({"role": turn["role"], "content": turn["content"]})
+        messages.append({"role": "user", "content": message})
+
+        # Stream response from Claude
+        stream = self.claude.messages.create(
+            model=self.MODEL,
+            max_tokens=self.TOKENS,
+            temperature=self.TEMPERATURE,
+            messages=messages,
+            stream=True
+         )
+
+        full_response = ""
+        for chunk in stream:
+            if chunk.type == "content_block_delta" and hasattr(chunk.delta, "text"):
+                text = chunk.delta.text
+                full_response += text
+                yield full_response  # Stream to Gradio
+        
         
         
         
@@ -144,9 +154,16 @@ class LLM_Clients_Claude:
 
 if __name__ == "__main__":
     ai = LLM_Clients_Claude() 
-    while True:
-        user_input = input("Question: ")               
-        if user_input.lower() == "exit":
-            break
-        else:
-            ai.chat(user_input)
+    
+    # while True:
+    #     user_input = input("Question: ")               
+    #     if user_input.lower() == "exit":
+    #         break
+    #     else:
+    #         response  = ai.chat(user_input)
+    #         for sentence in response:
+    #             print(sentence)
+                
+            
+    
+    gr.ChatInterface(fn=ai.chat, type="messages").launch()
