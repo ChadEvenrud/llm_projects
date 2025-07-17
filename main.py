@@ -9,6 +9,7 @@ import markdown
 # import google.generativeai
 from typing import List
 import gradio as gr 
+import json 
 
 #load environment variables 
 load_dotenv()
@@ -24,6 +25,36 @@ def messages_for(system_prompt, user_prompt):
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt}
         ] 
+#LLM Tools. Functions that can be used my LLMs to utilize tools.
+
+def build_tool_schema(name: str, description: str, properties: dict, required: list) -> dict:
+    """
+    Builds a tool schema for a Claude-compatible tool.
+
+    Args:
+        name (str): Name of the tool.
+        description (str): Description of what the tool does.
+        properties (dict): Dictionary of input fields and their definitions.
+        required (list): List of required field names.
+
+    Returns:
+        dict: Tool schema dictionary.
+    """
+    return {
+        "name": name,
+        "description": description,
+        "input_schema": {
+            "type": "object",
+            "properties": properties,
+            "required": required
+        }
+    }
+    
+    
+
+
+
+
 # Classes 
 
 class Website:
@@ -43,6 +74,7 @@ class Website:
         for irrelevant in soup.body(["script", "style", "img", "input"]):
             irrelevant.decompose()
         self.text = soup.body.get_text(separator="\n", strip=True)
+        
         
 class LLM_Clients_OpenAI:
     """
